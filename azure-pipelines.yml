@@ -37,3 +37,26 @@ stages:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
               ArtifactName: 'drop'
               publishLocation: 'Container'
+
+  - stage: Deploy
+    displayName: 'Deploy to Linux VM'
+    dependsOn: Build
+    jobs:
+      - deployment: VMDeploy
+        displayName: 'Web deploy'
+        environment:
+          name: 'Linux Env'
+          resourceType: VirtualMachine
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: drop
+
+                - script: |
+                    echo "Desplegando aplicación en la VM..."
+                    unzip $(Pipeline.Workspace)/drop/$(Build.BuildId).zip -d deploy_folder
+                    # Aquí podrías copiar los archivos al directorio real de tu app, por ejemplo:
+                    # sudo cp -r deploy_folder/* /var/www/html/
+                  displayName: 'Despliegue en Linux VM'
